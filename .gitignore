@@ -1,0 +1,41 @@
+# Build
+build/
+out/
+cmake-build-*/
+*.o
+*.obj
+
+# Qt / moc
+moc_*.cpp
+moc_*.h
+ui_*.h
+qrc_*.cpp
+*.qmlc
+*.jsc
+
+# IDE
+.idea/
+.vscode/
+.vs/
+*.user
+*.suo
+CMakeLists.txt.user*
+
+# macOS
+.DS_Store
+
+# LaTeX
+docs/rapport/*.aux
+docs/rapport/*.log
+docs/rapport/*.out
+docs/rapport/*.toc
+docs/rapport/*.bbl
+docs/rapport/*.blg
+docs/rapport/*.fls
+docs/rapport/*.fdb_latexmk
+docs/rapport/*.synctex.gz
+
+# Doxygen
+docs/html/
+docs/latex/
+Doxyfile.bak
