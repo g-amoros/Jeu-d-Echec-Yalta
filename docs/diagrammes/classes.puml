@@ -1,0 +1,134 @@
+@startuml classes
+' Diagramme de classes — Jeu d'Échec Yalta
+' Architecture MVC + Strategy (déplacements) + Factory (pièces)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty members
+
+package "Modèle" {
+
+    enum Couleur {
+        BLANC
+        NOIR
+        ROUGE
+    }
+
+    enum TypePiece {
+        PION
+        TOUR
+        CAVALIER
+        FOU
+        REINE
+        ROI
+    }
+
+    class Position {
+        - secteur : int
+        - colonne : char
+        - rang : int
+        + estValide() : bool
+        + operator==(Position) : bool
+    }
+
+    abstract class Piece {
+        # couleur : Couleur
+        # type : TypePiece
+        # position : Position
+        # aDejaBouge : bool
+        - strategie : unique_ptr<IStrategieDeplacement>
+        + coupsPossibles(Plateau) : vector<Position>
+        + getCouleur() : Couleur
+        + getType() : TypePiece
+        + deplacer(Position) : void
+    }
+
+    interface IStrategieDeplacement {
+        + {abstract} coupsPossibles(Plateau, Position, Couleur) : vector<Position>
+    }
+
+    class DeplacementPion
+    class DeplacementTour
+    class DeplacementCavalier
+    class DeplacementFou
+    class DeplacementReine
+    class DeplacementRoi
+
+    class PieceFactory <<Factory>> {
+        + {static} creer(TypePiece, Couleur, Position) : unique_ptr<Piece>
+        + {static} dispositionInitiale() : vector<unique_ptr<Piece>>
+    }
+
+    class Plateau {
+        - cases : map<Position, Piece*>
+        + pieceEn(Position) : Piece*
+        + deplacer(Position, Position) : void
+        + estMenacee(Position, Couleur) : bool
+    }
+
+    class Coup {
+        + origine : Position
+        + destination : Position
+        + type : TypeCoup
+        + piecePromue : TypePiece
+    }
+
+    class Partie {
+        - plateau : Plateau
+        - joueurs : vector<Joueur>
+        - tourCourant : int
+        - historique : vector<Coup>
+        + jouerCoup(Coup) : bool
+        + estEnEchec(Couleur) : bool
+        + estMat(Couleur) : bool
+        + estPat(Couleur) : bool
+        + joueurActif() : Joueur&
+    }
+
+    class Joueur {
+        + couleur : Couleur
+        + estElimine : bool
+    }
+}
+
+package "Vue (Qt)" {
+    class FenetrePrincipale
+    class VuePlateau <<QGraphicsScene>>
+    class VuePiece <<QGraphicsItem>>
+}
+
+package "Contrôleur" {
+    class ControleurJeu {
+        - partie : Partie&
+        - vue : VuePlateau&
+        + onCaseCliquee(Position) : void
+    }
+}
+
+' Héritage Strategy
+IStrategieDeplacement <|.. DeplacementPion
+IStrategieDeplacement <|.. DeplacementTour
+IStrategieDeplacement <|.. DeplacementCavalier
+IStrategieDeplacement <|.. DeplacementFou
+IStrategieDeplacement <|.. DeplacementReine
+IStrategieDeplacement <|.. DeplacementRoi
+
+Piece *-- IStrategieDeplacement : délègue >
+Piece --> Couleur
+Piece --> TypePiece
+Piece --> Position
+
+PieceFactory ..> Piece : crée >
+
+Plateau o-- Piece
+Partie *-- Plateau
+Partie *-- Joueur
+Partie --> Coup
+
+ControleurJeu --> Partie : modifie >
+ControleurJeu --> VuePlateau : met à jour >
+FenetrePrincipale *-- VuePlateau
+VuePlateau *-- VuePiece
+VuePlateau ..> Partie : observe (signals/slots) >
+
+@enduml
