@@ -1,0 +1,49 @@
+@startuml etats_transitions
+' Diagramme d'états-transitions — déroulement d'une partie Yalta (3 joueurs)
+
+[*] --> InitPartie
+
+state InitPartie : Plateau monté\n48 pièces disposées
+InitPartie --> TourJoueur : démarrage
+
+state TourJoueur {
+    [*] --> AttenteCoup
+    AttenteCoup --> CoupChoisi : joueur sélectionne origine + destination
+    CoupChoisi --> AttenteCoup : coup illégal / laisserait son roi en échec
+    CoupChoisi --> CoupValide : coup légal
+    CoupValide --> AttenteCoup : si TypeCoup == PROMOTION\net choix en attente
+    CoupValide --> [*] : coup appliqué
+}
+
+TourJoueur --> EvaluationFinTour
+
+state EvaluationFinTour {
+    [*] --> VerificationEchec
+    VerificationEchec --> RoiMatEliminé : mat d'un roi adverse
+    VerificationEchec --> EchecSignalé : un roi adverse en échec
+    VerificationEchec --> RAS : aucun échec
+}
+
+EvaluationFinTour --> TourJoueur : passage au joueur suivant\n(joueurs non éliminés)
+
+state RoiMatEliminé : Joueur éliminé\npièces retirées
+RoiMatEliminé --> Finale : s'il ne reste qu'1 joueur actif
+RoiMatEliminé --> TourJoueur : s'il reste 2 joueurs actifs
+
+state Finale {
+    state "Victoire" as Victoire
+    state "Nulle (pat / matériel insuffisant)" as Nulle
+}
+
+TourJoueur --> Finale : pat du joueur actif\n(aucun coup légal, roi non en échec)
+
+Finale --> [*]
+
+note right of RoiMatEliminé
+  Spécificité Yalta :
+  un joueur maté est
+  éliminé, la partie
+  continue à 2.
+end note
+
+@enduml
