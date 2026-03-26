@@ -66,11 +66,20 @@ package "Modèle" {
         + estMenacee(Position, Couleur) : bool
     }
 
+    enum TypeCoup {
+        NORMAL
+        ROQUE_PETIT
+        ROQUE_GRAND
+        PROMOTION
+        PRISE_EN_PASSANT
+    }
+
     class Coup {
         + origine : Position
         + destination : Position
         + type : TypeCoup
         + piecePromue : TypePiece
+        + piecePrise : Piece*
     }
 
     class Partie {
@@ -101,7 +110,9 @@ package "Contrôleur" {
     class ControleurJeu {
         - partie : Partie&
         - vue : VuePlateau&
+        - selection : optional<Position>
         + onCaseCliquee(Position) : void
+        + onPromotionDemandee(TypePiece) : void
     }
 }
 
@@ -124,6 +135,7 @@ Plateau o-- Piece
 Partie *-- Plateau
 Partie *-- Joueur
 Partie --> Coup
+Coup --> TypeCoup
 
 ControleurJeu --> Partie : modifie >
 ControleurJeu --> VuePlateau : met à jour >
