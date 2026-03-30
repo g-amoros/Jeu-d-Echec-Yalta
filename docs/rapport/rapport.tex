@@ -1,0 +1,100 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue!50!black}
+\setlist{nosep}
+
+\title{\vspace{-1.5cm}Jeu d'\'Echec Yalta --- Rapport technique}
+\author{Gaël Amoros}
+\date{Avril 2026}
+
+\begin{document}
+\maketitle
+\vspace{-0.8cm}
+
+\section{Contexte et analyse du problème}
+
+Le Yalta est une variante d'échecs à trois joueurs jouée sur un plateau hexagonal de
+96~cases, chaque joueur disposant des 16~pièces classiques (soit 48~pièces au total).
+Le projet consiste à concevoir et implémenter ce jeu en C++ en appliquant une
+modélisation orientée objet rigoureuse et trois design patterns, dont le
+\emph{Modèle-Vue-Contrôleur} imposé par le sujet. Une intelligence artificielle
+fondée sur min-max / alpha-beta multi-threadée est attendue dans une itération
+ultérieure et sort donc du périmètre de ce rapport intermédiaire.
+
+Les difficultés principales identifiées en phase d'analyse sont~: (i)~la
+représentation des 96~cases du plateau Yalta, qui n'est pas une grille cartésienne
+classique et impose une coordonnée à trois composantes (\emph{secteur},
+\emph{colonne}, \emph{rang})~; (ii)~les règles de déplacement des pièces lorsqu'elles
+franchissent la frontière entre deux secteurs, en particulier pour les fous et les
+reines dont les diagonales « tournent »~; (iii)~la gestion d'une partie à trois
+joueurs, avec l'élimination d'un joueur maté et la poursuite de la partie entre les
+deux restants.
+
+\section{Choix de conception}
+
+\subsection{Architecture MVC}
+
+L'application est structurée en trois couches étanches~:
+\begin{itemize}
+    \item \textbf{Modèle}~: \texttt{Plateau}, \texttt{Partie}, \texttt{Piece} et ses
+    sous-classes, \texttt{Coup}. Ne dépend d'aucune bibliothèque graphique, ce qui
+    le rend testable unitairement et réutilisable pour brancher l'IA.
+    \item \textbf{Vue}~: \texttt{FenetrePrincipale}, \texttt{VuePlateau} (un
+    \texttt{QGraphicsScene}), \texttt{VuePiece}. Se contente de rendre l'état et
+    d'émettre des signaux Qt lorsqu'une case est cliquée.
+    \item \textbf{Contrôleur}~: \texttt{ControleurJeu} reçoit les signaux de la Vue,
+    valide les coups auprès du Modèle et propage les mises à jour.
+\end{itemize}
+
+Le pattern est renforcé par le mécanisme \emph{signals/slots} de Qt, qui joue le
+rôle d'un Observer intégré~: toute modification du modèle émet un signal que la vue
+écoute pour se redessiner, sans couplage direct.
+
+\subsection{Strategy pour les déplacements}
+
+Chaque pièce délègue le calcul de ses coups possibles à une implémentation de
+l'interface \texttt{IStrategieDeplacement} (\texttt{DeplacementPion},
+\texttt{DeplacementTour}, etc.). Cela évite un \texttt{switch} géant sur le type de
+pièce dans le moteur, et --- surtout --- préparera l'intégration future de
+stratégies de décision IA (\texttt{MinMax}, \texttt{AlphaBeta}) qui remplaceront
+\texttt{ControleurJeu} comme source de coups pour un joueur donné sans modification
+du modèle.
+
+\subsection{Factory pour la création des pièces}
+
+\texttt{PieceFactory} centralise deux responsabilités~: instancier une pièce à
+partir de son type et de sa couleur (avec injection de la bonne Strategy), et
+produire la disposition initiale des 48~pièces sur les trois camps Yalta. Cette
+centralisation évite la duplication de la logique de câblage et facilite la
+gestion de la \emph{promotion du pion} qui, concrètement, demande de remplacer une
+pièce par une autre au même emplacement.
+
+\section{Diagrammes}
+
+Trois diagrammes UML accompagnent cette analyse (dossier
+\texttt{docs/diagrammes/})~:
+\begin{itemize}
+    \item \textbf{Diagramme de classes} --- structure statique complète avec les
+    trois patterns mis en évidence~;
+    \item \textbf{Diagramme d'états-transitions} --- cycle d'un tour de jeu, avec
+    les états terminaux spécifiques à la variante 3~joueurs~;
+    \item \textbf{Diagramme de cas d'utilisation} --- acteurs et interactions
+    attendues, avec l'acteur \emph{Joueur IA} déjà identifié pour l'itération
+    suivante.
+\end{itemize}
+
+% \section{Fonctionnalités implémentées}
+% \section{Difficultés rencontrées}
+% \section{Améliorations futures (IA min-max multi-threadée)}
+% --- à compléter en fin de projet ---
+
+\end{document}
