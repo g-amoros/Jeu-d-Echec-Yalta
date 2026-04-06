@@ -1,17 +1,27 @@
 #include "PieceFactory.h"
 
+#include "strategies/DeplacementCavalier.h"
+#include "strategies/DeplacementFou.h"
+#include "strategies/DeplacementPion.h"
+#include "strategies/DeplacementReine.h"
+#include "strategies/DeplacementRoi.h"
+#include "strategies/DeplacementTour.h"
 #include <stdexcept>
 
 namespace yalta {
 
 namespace {
 
-// Les Strategy concrètes seront implémentées à la session suivante.
-// En attendant, creer() construit la pièce sans stratégie : les appels à
-// Piece::coupsPossibles lèveront donc une erreur si on les sollicite avant
-// la session 5. C'est volontaire pour échouer bruyamment.
-std::unique_ptr<IStrategieDeplacement> strategiePour(TypePiece /*type*/) {
-    return nullptr;
+std::unique_ptr<IStrategieDeplacement> strategiePour(TypePiece type) {
+    switch (type) {
+        case TypePiece::PION:     return std::make_unique<DeplacementPion>();
+        case TypePiece::TOUR:     return std::make_unique<DeplacementTour>();
+        case TypePiece::CAVALIER: return std::make_unique<DeplacementCavalier>();
+        case TypePiece::FOU:      return std::make_unique<DeplacementFou>();
+        case TypePiece::REINE:    return std::make_unique<DeplacementReine>();
+        case TypePiece::ROI:      return std::make_unique<DeplacementRoi>();
+    }
+    throw std::invalid_argument("strategiePour : TypePiece inconnu");
 }
 
 void ajouterCamp(std::vector<std::unique_ptr<Piece>>& pieces, Couleur couleur, std::int8_t secteur) {
