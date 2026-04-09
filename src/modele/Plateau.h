@@ -33,6 +33,14 @@ public:
     /// Itération sur toutes les pièces présentes.
     [[nodiscard]] const std::unordered_map<Position, Piece*>& cases() const noexcept { return cases_; }
 
+    /// Indique si la case @p origine est menacée par au moins une pièce de
+    /// couleur autre que @p defenseur (toutes couleurs adverses confondues,
+    /// spécificité Yalta).
+    [[nodiscard]] bool estMenacee(Position cible, Couleur defenseur) const;
+
+    /// Nombre total de cases légales du plateau Yalta (3 secteurs × 32 cases).
+    static constexpr int NB_CASES = 96;
+
 private:
     std::unordered_map<Position, Piece*> cases_;
 };

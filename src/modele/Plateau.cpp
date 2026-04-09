@@ -1,6 +1,20 @@
 #include "Plateau.h"
 
+#include "Piece.h"
+
 namespace yalta {
+
+bool Plateau::estMenacee(Position cible, Couleur defenseur) const {
+    for (const auto& [pos, piece] : cases_) {
+        if (piece == nullptr) continue;
+        if (piece->getCouleur() == defenseur) continue;
+        for (const Position& coup : piece->coupsPossibles(*this)) {
+            if (coup == cible) return true;
+        }
+    }
+    return false;
+}
+
 
 Piece* Plateau::pieceEn(Position p) const noexcept {
     auto it = cases_.find(p);
