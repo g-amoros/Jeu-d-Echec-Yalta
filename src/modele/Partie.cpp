@@ -3,6 +3,7 @@
 #include "PieceFactory.h"
 
 #include <algorithm>
+#include <cstdlib>
 
 namespace yalta {
 
@@ -95,6 +96,43 @@ bool Partie::jouerCoup(const Coup& coup) {
         }
     }
 
+    passerAuSuivant();
+    return true;
+}
+
+bool Partie::tenterRoque(TypeCoup sens) {
+    const Couleur c = joueurActif().couleur;
+    Piece* roi = trouverRoi(c);
+    if (!roi || roi->aDejaBouge() || estEnEchec(c)) return false;
+
+    const int dcTour   = (sens == TypeCoup::ROQUE_PETIT) ? +3 : -4;
+    const int dcMilieu = (sens == TypeCoup::ROQUE_PETIT) ? +1 : -1;
+    const int dcRoi    = (sens == TypeCoup::ROQUE_PETIT) ? +2 : -2;
+
+    Position posRoi  = roi->getPosition();
+    Position posTour{posRoi.secteur,
+                     static_cast<char>(posRoi.colonne + dcTour),
+                     posRoi.rang};
+    Piece* tour = plateau_.pieceEn(posTour);
+    if (!tour || tour->getType() != TypePiece::TOUR || tour->aDejaBouge()) return false;
+
+    // Cases entre le roi et la tour doivent être vides et non menacées.
+    for (int step = 1; step <= std::abs(dcTour) - 1; ++step) {
+        int dir = (dcTour > 0) ? +1 : -1;
+        Position c1{posRoi.secteur,
+                    static_cast<char>(posRoi.colonne + dir * step),
+                    posRoi.rang};
+        if (!plateau_.caseVide(c1)) return false;
+        if (step <= 2 && plateau_.estMenacee(c1, c)) return false;
+    }
+
+    Position destRoi {posRoi.secteur, static_cast<char>(posRoi.colonne + dcRoi),    posRoi.rang};
+    Position destTour{posRoi.secteur, static_cast<char>(posRoi.colonne + dcMilieu), posRoi.rang};
+
+    plateau_.deplacer(posRoi,  destRoi);  roi->setPosition(destRoi);
+    plateau_.deplacer(posTour, destTour); tour->setPosition(destTour);
+
+    historique_.push_back(Coup{posRoi, destRoi, sens, TypePiece::REINE});
     passerAuSuivant();
     return true;
 }

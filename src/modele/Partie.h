@@ -28,6 +28,9 @@ public:
     /// Tente de jouer @p coup. Retourne true si le coup a été appliqué.
     bool jouerCoup(const Coup& coup);
 
+    /// Tente le petit ou grand roque pour le joueur actif.
+    bool tenterRoque(TypeCoup sens);
+
     [[nodiscard]] bool estEnEchec(Couleur c) const;
     [[nodiscard]] bool estMat(Couleur c) const;
     [[nodiscard]] bool estPat(Couleur c) const;
