@@ -31,6 +31,13 @@ public:
     /// Tente le petit ou grand roque pour le joueur actif.
     bool tenterRoque(TypeCoup sens);
 
+    /// Promeut le pion en @p pos en la pièce @p nouveauType.
+    bool promouvoir(Position pos, TypePiece nouveauType);
+
+    /// Indique si une prise en passant est possible depuis @p origine vers
+    /// @p destination au coup courant (basée sur le dernier coup joué).
+    [[nodiscard]] bool priseEnPassantPossible(Position origine, Position destination) const;
+
     [[nodiscard]] bool estEnEchec(Couleur c) const;
     [[nodiscard]] bool estMat(Couleur c) const;
     [[nodiscard]] bool estPat(Couleur c) const;

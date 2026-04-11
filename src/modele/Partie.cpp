@@ -100,6 +100,44 @@ bool Partie::jouerCoup(const Coup& coup) {
     return true;
 }
 
+bool Partie::priseEnPassantPossible(Position origine, Position destination) const {
+    if (historique_.empty()) return false;
+    const Coup& prec = historique_.back();
+
+    Piece* piecePrec = plateau_.pieceEn(prec.destination);
+    if (!piecePrec || piecePrec->getType() != TypePiece::PION) return false;
+
+    // Le pion adverse vient d'avancer de deux cases.
+    if (std::abs(prec.destination.rang - prec.origine.rang) != 2) return false;
+
+    Piece* pion = plateau_.pieceEn(origine);
+    if (!pion || pion->getType() != TypePiece::PION) return false;
+
+    // La destination doit être la case « sautée » par le pion adverse.
+    Position passage{prec.origine.secteur,
+                     prec.origine.colonne,
+                     static_cast<std::int8_t>((prec.origine.rang + prec.destination.rang) / 2)};
+    return destination == passage && origine.rang == prec.destination.rang;
+}
+
+bool Partie::promouvoir(Position pos, TypePiece nouveauType) {
+    Piece* pion = plateau_.pieceEn(pos);
+    if (!pion || pion->getType() != TypePiece::PION) return false;
+    if (nouveauType == TypePiece::PION || nouveauType == TypePiece::ROI) return false;
+
+    Couleur c = pion->getCouleur();
+    // Retirer l'ancienne pièce du pool et du plateau.
+    plateau_.retirer(pos);
+    pieces_.erase(std::remove_if(pieces_.begin(), pieces_.end(),
+        [&](const std::unique_ptr<Piece>& u) { return u.get() == pion; }),
+        pieces_.end());
+
+    // Créer la nouvelle pièce.
+    pieces_.push_back(PieceFactory::creer(nouveauType, c, pos));
+    plateau_.poser(pos, pieces_.back().get());
+    return true;
+}
+
 bool Partie::tenterRoque(TypeCoup sens) {
     const Couleur c = joueurActif().couleur;
     Piece* roi = trouverRoi(c);
