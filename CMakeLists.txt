@@ -17,10 +17,46 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Qt 6 — module Widgets pour l'UI.
-# find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-# Squelette : le répertoire src/ sera peuplé progressivement.
-# add_subdirectory(src)
-# enable_testing()
-# add_subdirectory(tests)
+# Bibliothèque modèle (sans Qt pour rester testable).
+add_library(yalta_modele STATIC
+    src/modele/Plateau.cpp
+    src/modele/PieceFactory.cpp
+    src/modele/Partie.cpp
+    src/modele/strategies/DeplacementPion.cpp
+    src/modele/strategies/DeplacementTour.cpp
+    src/modele/strategies/DeplacementCavalier.cpp
+    src/modele/strategies/DeplacementFou.cpp
+    src/modele/strategies/DeplacementReine.cpp
+    src/modele/strategies/DeplacementRoi.cpp
+)
+target_include_directories(yalta_modele PUBLIC src)
+
+# Exécutable Qt.
+add_executable(yalta
+    src/main.cpp
+    src/vue/FenetrePrincipale.cpp
+    src/vue/VuePlateau.cpp
+    src/controleur/ControleurJeu.cpp
+)
+target_include_directories(yalta PRIVATE src)
+target_link_libraries(yalta PRIVATE yalta_modele Qt6::Widgets)
+
+# Tests GoogleTest (fetch automatique).
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+add_executable(yalta_tests
+    tests/test_deplacements.cpp
+    tests/test_coups_speciaux.cpp
+)
+target_link_libraries(yalta_tests PRIVATE yalta_modele GTest::gtest_main)
+target_include_directories(yalta_tests PRIVATE src)
+include(GoogleTest)
+gtest_discover_tests(yalta_tests)
