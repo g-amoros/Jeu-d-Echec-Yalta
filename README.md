@@ -31,6 +31,14 @@ cmake --build build
 ## Documentation
 
 - `docs/TECH.md` — choix techniques.
-- `docs/diagrammes/` — diagrammes UML.
-- `docs/rapport/rapport.pdf` — rapport du projet.
-- `doxygen Doxyfile` → documentation générée de l'API.
+- `docs/diagrammes/` — 3 diagrammes UML (classes, états-transitions, cas d'utilisation).
+- `docs/rapport/rapport.pdf` — rapport du projet (`latexmk -pdf docs/rapport/rapport.tex`).
+- `doxygen Doxyfile` → HTML généré dans `docs/html/`.
+
+## État d'avancement (13/04/2026)
+
+**Fait** : moteur de jeu complet (6 types de pièces via Strategy, plateau 96 cases,
+Partie 3 joueurs, échec/mat/pat/élimination, roque, promotion, prise en passant),
+vue Qt, contrôleur clic-à-clic, tests GoogleTest, 3 diagrammes, rapport LaTeX.
+
+**À venir** : IA **min-max / alpha-beta** multi-threadée (itération suivante).

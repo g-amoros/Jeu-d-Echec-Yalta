@@ -1,0 +1,13 @@
+PROJECT_NAME           = "Jeu d'Echec Yalta"
+PROJECT_BRIEF          = "Variante 3 joueurs avec architecture MVC + Strategy + Factory"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = src README.md
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+USE_MDFILE_AS_MAINPAGE = README.md
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
