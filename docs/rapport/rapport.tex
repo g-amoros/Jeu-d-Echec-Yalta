@@ -92,9 +92,48 @@ Trois diagrammes UML accompagnent cette analyse (dossier
     suivante.
 \end{itemize}
 
-% \section{Fonctionnalités implémentées}
-% \section{Difficultés rencontrées}
-% \section{Améliorations futures (IA min-max multi-threadée)}
-% --- à compléter en fin de projet ---
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/classes.png}
+    \caption{Diagramme de classes simplifié (MVC + Strategy + Factory).}
+\end{figure}
+
+\section{Fonctionnalités implémentées}
+
+À ce stade du projet, le socle suivant est opérationnel~:
+\begin{itemize}
+    \item moteur complet avec les six types de pièces (pion, tour, cavalier, fou,
+    reine, roi) et leurs règles de déplacement via Strategy~;
+    \item plateau à 96 cases et disposition initiale des 48 pièces des 3 camps,
+    construite par la \texttt{PieceFactory}~;
+    \item tour de jeu cyclique entre les trois joueurs, détection d'échec, de mat
+    (entraînant l'élimination du joueur) et de pat~;
+    \item coups spéciaux~: roque court et long, promotion du pion, prise en
+    passant (API \texttt{Partie::tenterRoque}, \texttt{Partie::promouvoir},
+    \texttt{Partie::priseEnPassantPossible})~;
+    \item interface graphique Qt~6 basée sur \texttt{QGraphicsScene} avec
+    sélection au clic, affichage des coups légaux en surbrillance, et rafraîchissement
+    par signaux/slots~;
+    \item couverture de test \texttt{GoogleTest} sur les déplacements et les cas
+    particuliers du moteur.
+\end{itemize}
+
+\section{Difficultés rencontrées}
+
+La principale difficulté a été la modélisation de la géométrie du plateau
+Yalta~: la représentation à base de \emph{(secteur, colonne, rang)} adoptée ici
+est volontairement simplifiée et ne gère pas encore les transitions entre
+secteurs pour les pièces de longue portée (fous, reines). Cette limite,
+identifiée dès la conception, sera levée en introduisant une fonction
+\emph{voisin(Position, direction)} consultée par les Strategy concernées.
+
+\section{Améliorations futures}
+
+L'itération suivante ajoutera l'intelligence artificielle demandée~: une
+Strategy de décision implémentant \emph{min-max} puis \emph{alpha-beta}, avec
+parallélisation des sous-arbres via \texttt{std::async}. Cette IA pourra
+incarner un, deux ou trois joueurs simultanément, conformément au cahier des
+charges. La fonction d'évaluation, inspirée de l'annexe du sujet, combinera
+matériel, mobilité et sécurité du roi.
 
 \end{document}
