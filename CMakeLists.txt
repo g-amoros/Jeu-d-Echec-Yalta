@@ -4,6 +4,7 @@ project(yalta LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -21,6 +22,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 # Bibliothèque modèle (sans Qt pour rester testable).
 add_library(yalta_modele STATIC
+    src/modele/Piece.cpp
     src/modele/Plateau.cpp
     src/modele/PieceFactory.cpp
     src/modele/Partie.cpp
@@ -55,6 +57,7 @@ enable_testing()
 add_executable(yalta_tests
     tests/test_deplacements.cpp
     tests/test_coups_speciaux.cpp
+    tests/test_ia.cpp
 )
 target_link_libraries(yalta_tests PRIVATE yalta_modele GTest::gtest_main)
 target_include_directories(yalta_tests PRIVATE src)

@@ -39,6 +39,11 @@ public:
 
     void setPosition(Position p) noexcept { position_ = p; aDejaBouge_ = true; }
 
+    void marquerDeplace() noexcept { aDejaBouge_ = true; }
+
+    /// Retourne une copie indépendante de cette pièce (même type/couleur/pos/flag).
+    [[nodiscard]] std::unique_ptr<Piece> clone() const;
+
     [[nodiscard]] std::vector<Position> coupsPossibles(const Plateau& plateau) const {
         return strategie_->coupsPossibles(plateau, position_, couleur_);
     }
