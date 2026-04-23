@@ -20,29 +20,22 @@ namespace yalta {
 class Partie {
 public:
     Partie();
+    Partie(const Partie& other);
+    Partie& operator=(const Partie& other);
 
     [[nodiscard]] const Plateau& plateau() const noexcept { return plateau_; }
-
     [[nodiscard]] const Joueur& joueurActif() const noexcept { return joueurs_[tourCourant_]; }
 
-    /// Tente de jouer @p coup. Retourne true si le coup a été appliqué.
+    /// Retourne tous les coups légaux du joueur actif (NORMAL + PROMOTION).
+    [[nodiscard]] std::vector<Coup> coupsLegaux() const;
+
     bool jouerCoup(const Coup& coup);
-
-    /// Tente le petit ou grand roque pour le joueur actif.
     bool tenterRoque(TypeCoup sens);
-
-    /// Promeut le pion en @p pos en la pièce @p nouveauType.
     bool promouvoir(Position pos, TypePiece nouveauType);
-
-    /// Indique si une prise en passant est possible depuis @p origine vers
-    /// @p destination au coup courant (basée sur le dernier coup joué).
     [[nodiscard]] bool priseEnPassantPossible(Position origine, Position destination) const;
-
     [[nodiscard]] bool estEnEchec(Couleur c) const;
     [[nodiscard]] bool estMat(Couleur c) const;
     [[nodiscard]] bool estPat(Couleur c) const;
-
-    /// Indique si la partie est terminée (≤ 1 joueur non éliminé).
     [[nodiscard]] bool estTerminee() const;
 
 private:

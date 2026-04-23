@@ -19,6 +19,27 @@ Partie::Partie() {
     };
 }
 
+Partie::Partie(const Partie& other)
+    : joueurs_(other.joueurs_)
+    , historique_(other.historique_)
+    , tourCourant_(other.tourCourant_)
+{
+    for (const auto& p : other.pieces_)
+        pieces_.push_back(p->clone());
+    for (const auto& p : pieces_)
+        plateau_.poser(p->getPosition(), p.get());
+}
+
+Partie& Partie::operator=(const Partie& other) {
+    Partie tmp(other);
+    std::swap(plateau_,     tmp.plateau_);
+    std::swap(pieces_,      tmp.pieces_);
+    std::swap(joueurs_,     tmp.joueurs_);
+    std::swap(historique_,  tmp.historique_);
+    std::swap(tourCourant_, tmp.tourCourant_);
+    return *this;
+}
+
 Piece* Partie::trouverRoi(Couleur c) const {
     for (const auto& p : pieces_) {
         if (p->getType() == TypePiece::ROI && p->getCouleur() == c) {
@@ -52,6 +73,24 @@ bool Partie::aUnCoupLegal(Couleur c) const {
         }
     }
     return false;
+}
+
+std::vector<Coup> Partie::coupsLegaux() const {
+    Couleur c = joueurActif().couleur;
+    std::vector<Coup> legaux;
+    for (const auto& p : pieces_) {
+        if (p->getCouleur() != c) continue;
+        for (Position dest : p->coupsPossibles(plateau_)) {
+            TypeCoup t = TypeCoup::NORMAL;
+            if (p->getType() == TypePiece::PION && dest.rang == 4)
+                t = TypeCoup::PROMOTION;
+            Coup coup{p->getPosition(), dest, t, TypePiece::REINE};
+            Partie copie = *this;
+            if (copie.jouerCoup(coup))
+                legaux.push_back(coup);
+        }
+    }
+    return legaux;
 }
 
 bool Partie::estMat(Couleur c) const {
