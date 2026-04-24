@@ -3,6 +3,7 @@
 #include "ia/IAMinMax.h"
 #include "modele/Coup.h"
 #include "modele/Couleur.h"
+#include "modele/Joueur.h"
 #include "modele/Partie.h"
 #include "modele/Piece.h"
 #include "modele/TypePiece.h"
@@ -56,10 +57,40 @@ QString ControleurJeu::messageTour() const {
         .arg(nom, estIA ? QStringLiteral(" (IA)") : QString());
 }
 
+static QString nomCouleur(Couleur c) {
+    switch (c) {
+        case Couleur::BLANC: return QStringLiteral("Blancs");
+        case Couleur::NOIR:  return QStringLiteral("Noirs");
+        case Couleur::ROUGE: return QStringLiteral("Rouges");
+    }
+    return {};
+}
+
+QString ControleurJeu::construireMessageFin() const {
+    if (partie_.estNulle()) {
+        return QStringLiteral("Partie nulle\nRègle des 50 coups");
+    }
+
+    QString vainqueur;
+    for (const Joueur& j : partie_.joueurs()) {
+        if (!j.estElimine) { vainqueur = nomCouleur(j.couleur); break; }
+    }
+
+    QString msg = QStringLiteral("Victoire des %1 !").arg(vainqueur);
+    for (const Joueur& j : partie_.joueurs()) {
+        if (!j.estElimine || !j.raisonElimination) continue;
+        const QString raison = (*j.raisonElimination == RaisonElimination::MAT)
+            ? QStringLiteral("mat") : QStringLiteral("pat");
+        msg += QStringLiteral("\n%1 : %2").arg(nomCouleur(j.couleur), raison);
+    }
+    return msg;
+}
+
 void ControleurJeu::notifierChangementTour() {
     if (partie_.estTerminee()) {
-        emit tourChange(QStringLiteral("Fin de partie !"));
-        emit partieTerminee(QStringLiteral("La partie est terminée."));
+        const QString msg = construireMessageFin();
+        emit tourChange(msg.section('\n', 0, 0));  // ligne courte pour la status bar
+        emit partieTerminee(msg);
     } else {
         emit tourChange(messageTour());
         if (joueursIA_.count(partie_.joueurActif().couleur) > 0) {

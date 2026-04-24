@@ -36,6 +36,7 @@ private slots:
 
 private:
     void notifierChangementTour();
+    [[nodiscard]] QString construireMessageFin() const;
 
     Partie&                 partie_;
     VuePlateau&             vue_;

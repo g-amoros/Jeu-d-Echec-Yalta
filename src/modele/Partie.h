@@ -25,6 +25,8 @@ public:
 
     [[nodiscard]] const Plateau& plateau() const noexcept { return plateau_; }
     [[nodiscard]] const Joueur& joueurActif() const noexcept { return joueurs_[tourCourant_]; }
+    [[nodiscard]] const std::vector<Joueur>& joueurs() const noexcept { return joueurs_; }
+    [[nodiscard]] bool estNulle() const;   // partie terminée par la règle des 50 coups
 
     /// Retourne tous les coups légaux du joueur actif (NORMAL + PROMOTION).
     [[nodiscard]] std::vector<Coup> coupsLegaux() const;

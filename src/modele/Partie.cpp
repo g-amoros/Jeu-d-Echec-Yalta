@@ -164,10 +164,15 @@ bool Partie::jouerCoup(const Coup& coup) {
     appliquerCoupSansValidation(coup);
     historique_.push_back(coup);
 
-    // Élimination des joueurs matés (spécificité Yalta).
+    // Élimination des joueurs matés ou patés (spécificité Yalta).
     for (Joueur& j : joueurs_) {
-        if (!j.estElimine && estMat(j.couleur)) {
+        if (j.estElimine) continue;
+        if (estMat(j.couleur)) {
             j.estElimine = true;
+            j.raisonElimination = RaisonElimination::MAT;
+        } else if (estPat(j.couleur)) {
+            j.estElimine = true;
+            j.raisonElimination = RaisonElimination::PAT;
         }
     }
 
@@ -262,11 +267,19 @@ void Partie::passerAuSuivant() {
     }
 }
 
-bool Partie::estTerminee() const {
-    if (coupsSansProgres_ >= 150) return true;   // règle des 50 coups (3 joueurs × 50 tours)
+bool Partie::estNulle() const {
+    // La règle des 50 coups ne déclenche une nulle que si plusieurs joueurs
+    // sont encore en jeu — sinon la victoire par élimination prime.
     int actifs = 0;
     for (const Joueur& j : joueurs_) if (!j.estElimine) ++actifs;
-    return actifs <= 1;
+    return actifs > 1 && coupsSansProgres_ >= 150;
+}
+
+bool Partie::estTerminee() const {
+    int actifs = 0;
+    for (const Joueur& j : joueurs_) if (!j.estElimine) ++actifs;
+    if (actifs <= 1) return true;          // victoire par élimination
+    return coupsSansProgres_ >= 150;       // nulle — règle des 50 coups
 }
 
 } // namespace yalta

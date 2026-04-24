@@ -345,16 +345,29 @@ void FenetrePrincipale::onTourChange(const QString& message) {
     statusBar()->showMessage(QStringLiteral("Yalta  ·  ") + message);
 }
 
-void FenetrePrincipale::onPartieTerminee(const QString& /*message*/) {
-    lblTour_->setText(QStringLiteral("Fin de partie !"));
-    lblTour_->setStyleSheet(QStringLiteral(
-        "color: #f38ba8;"
-        "font-size: 13px; font-weight: bold;"
-        "padding: 9px 12px; border-radius: 7px;"
-        "background-color: #3d1520;"
-        "border: 1px solid #f38ba8;"
-    ));
-    statusBar()->showMessage(QStringLiteral("Yalta  ·  Partie terminée"));
+void FenetrePrincipale::onPartieTerminee(const QString& message) {
+    lblTour_->setText(message);
+    lblTour_->setWordWrap(true);
+
+    const bool estVictoire = message.startsWith(QStringLiteral("Victoire"));
+    if (estVictoire) {
+        lblTour_->setStyleSheet(QStringLiteral(
+            "color: #f5c542;"
+            "font-size: 12px; font-weight: bold;"
+            "padding: 9px 12px; border-radius: 7px;"
+            "background-color: #352b08;"
+            "border: 1px solid #f5c542;"
+        ));
+    } else {
+        lblTour_->setStyleSheet(QStringLiteral(
+            "color: #a6adc8;"
+            "font-size: 12px; font-weight: bold;"
+            "padding: 9px 12px; border-radius: 7px;"
+            "background-color: #252535;"
+            "border: 1px solid #585b70;"
+        ));
+    }
+    statusBar()->showMessage(QStringLiteral("Yalta  ·  ") + message.section('\n', 0, 0));
 }
 
 void FenetrePrincipale::onNouvelleParte() {
