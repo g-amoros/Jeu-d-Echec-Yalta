@@ -39,6 +39,9 @@ public:
     [[nodiscard]] bool estTerminee() const;
 
 private:
+    [[nodiscard]] bool coupEstLegalApresSimulation(const Coup& coup, Couleur couleur) const;
+    void retirerPiece(Piece* piece);
+    void appliquerCoupSansValidation(const Coup& coup);
     void passerAuSuivant();
     [[nodiscard]] Piece* trouverRoi(Couleur c) const;
     [[nodiscard]] bool aUnCoupLegal(Couleur c) const;

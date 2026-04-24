@@ -6,11 +6,11 @@
 namespace yalta {
 
 enum class TypeCoup {
-    NORMAL,
-    ROQUE_PETIT,
-    ROQUE_GRAND,
-    PROMOTION,
-    PRISE_EN_PASSANT
+    NORMAL,           // coup classique sans règle spéciale
+    ROQUE_PETIT,      // roque du cote roi (petit roque)
+    ROQUE_GRAND,      // roque du cote dame (grand roque)
+    PROMOTION,        // promotion d'un pion en arrivant sur la derniere rangee
+    PRISE_EN_PASSANT  // prise speciale d'un pion "en passant"
 };
 
 /// Description d'un coup joué (ou à jouer) dans la partie.

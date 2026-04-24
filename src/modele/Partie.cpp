@@ -40,6 +40,43 @@ Partie& Partie::operator=(const Partie& other) {
     return *this;
 }
 
+void Partie::retirerPiece(Piece* piece) {
+    if (!piece) {
+        return;
+    }
+
+    plateau_.retirer(piece->getPosition());
+    pieces_.erase(std::remove_if(pieces_.begin(), pieces_.end(),
+        [&](const std::unique_ptr<Piece>& candidate) {
+            return candidate.get() == piece;
+        }),
+        pieces_.end());
+}
+
+void Partie::appliquerCoupSansValidation(const Coup& coup) {
+    Piece* piece = plateau_.pieceEn(coup.origine);
+    if (!piece) {
+        return;
+    }
+
+    if (Piece* prise = plateau_.pieceEn(coup.destination)) {
+        retirerPiece(prise);
+    }
+
+    plateau_.deplacer(coup.origine, coup.destination);
+    piece->setPosition(coup.destination);
+
+    if (coup.type == TypeCoup::PROMOTION) {
+        promouvoir(coup.destination, coup.piecePromue);
+    }
+}
+
+bool Partie::coupEstLegalApresSimulation(const Coup& coup, Couleur couleur) const {
+    Partie simulation = *this;
+    simulation.appliquerCoupSansValidation(coup);
+    return !simulation.estEnEchec(couleur);
+}
+
 Piece* Partie::trouverRoi(Couleur c) const {
     for (const auto& p : pieces_) {
         if (p->getType() == TypePiece::ROI && p->getCouleur() == c) {
@@ -56,20 +93,16 @@ bool Partie::estEnEchec(Couleur c) const {
 }
 
 bool Partie::aUnCoupLegal(Couleur c) const {
-    for (const auto& p : pieces_) {
-        if (p->getCouleur() != c) continue;
-        for (Position dest : p->coupsPossibles(plateau_)) {
-            // Simulation : on joue puis on annule pour vérifier l'échec.
-            Position depart = p->getPosition();
-            Piece*   prise  = plateau_.pieceEn(dest);
-            const_cast<Plateau&>(plateau_).deplacer(depart, dest);
-            p->setPosition(dest);
-            bool enEchec = estEnEchec(c);
-            // rollback
-            const_cast<Plateau&>(plateau_).deplacer(dest, depart);
-            p->setPosition(depart);
-            if (prise) const_cast<Plateau&>(plateau_).poser(dest, prise);
-            if (!enEchec) return true;
+    for (const auto& piece : pieces_) {
+        if (piece->getCouleur() != c) {
+            continue;
+        }
+
+        for (Position destination : piece->coupsPossibles(plateau_)) {
+            const Coup coup {piece->getPosition(), destination, TypeCoup::NORMAL, TypePiece::REINE};
+            if (coupEstLegalApresSimulation(coup, c)) {
+                return true;
+            }
         }
     }
     return false;
@@ -81,12 +114,8 @@ std::vector<Coup> Partie::coupsLegaux() const {
     for (const auto& p : pieces_) {
         if (p->getCouleur() != c) continue;
         for (Position dest : p->coupsPossibles(plateau_)) {
-            TypeCoup t = TypeCoup::NORMAL;
-            if (p->getType() == TypePiece::PION && dest.rang == 4)
-                t = TypeCoup::PROMOTION;
-            Coup coup{p->getPosition(), dest, t, TypePiece::REINE};
-            Partie copie = *this;
-            if (copie.jouerCoup(coup))
+            Coup coup{p->getPosition(), dest, TypeCoup::NORMAL, TypePiece::REINE};
+            if (coupEstLegalApresSimulation(coup, c))
                 legaux.push_back(coup);
         }
     }
@@ -104,28 +133,24 @@ bool Partie::estPat(Couleur c) const {
 bool Partie::jouerCoup(const Coup& coup) {
     Piece* piece = plateau_.pieceEn(coup.origine);
     if (!piece) return false;
-    if (piece->getCouleur() != joueurActif().couleur) return false;
+    const Couleur couleurJouee = piece->getCouleur();
+    if (couleurJouee != joueurActif().couleur) return false;
 
     auto coupsLegaux = piece->coupsPossibles(plateau_);
     if (std::find(coupsLegaux.begin(), coupsLegaux.end(), coup.destination) == coupsLegaux.end()) {
         return false;
     }
 
-    // Capture éventuelle.
-    Piece* pris = plateau_.pieceEn(coup.destination);
-    if (pris && pris->getCouleur() == piece->getCouleur()) return false;
-
-    plateau_.deplacer(coup.origine, coup.destination);
-    piece->setPosition(coup.destination);
-
-    if (estEnEchec(piece->getCouleur())) {
-        // rollback : le joueur ne peut laisser son roi en échec.
-        plateau_.deplacer(coup.destination, coup.origine);
-        piece->setPosition(coup.origine);
-        if (pris) plateau_.poser(coup.destination, pris);
+    Piece* cible = plateau_.pieceEn(coup.destination);
+    if (cible && cible->getCouleur() == couleurJouee) {
         return false;
     }
 
+    if (!coupEstLegalApresSimulation(coup, couleurJouee)) {
+        return false;
+    }
+
+    appliquerCoupSansValidation(coup);
     historique_.push_back(coup);
 
     // Élimination des joueurs matés (spécificité Yalta).

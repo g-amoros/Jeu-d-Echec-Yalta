@@ -29,4 +29,4 @@ public:
         Couleur        couleur) const = 0;
 };
 
-} // namespace yalta
+}
