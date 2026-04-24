@@ -2,6 +2,9 @@
 
 #include <QMainWindow>
 
+class QCheckBox;
+class QSpinBox;
+
 namespace yalta {
 
 class Partie;
@@ -22,6 +25,10 @@ private:
     Partie*        partie_     {nullptr};
     VuePlateau*    vuePlateau_ {nullptr};
     ControleurJeu* controleur_ {nullptr};
+    QCheckBox*     cbBlancsIA_ {nullptr};
+    QCheckBox*     cbNoirsIA_ {nullptr};
+    QCheckBox*     cbRougesIA_ {nullptr};
+    QSpinBox*      sbProfondeur_ {nullptr};
 };
 
 } // namespace yalta

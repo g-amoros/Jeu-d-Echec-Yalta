@@ -22,6 +22,8 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 # Bibliothèque modèle (sans Qt pour rester testable).
 add_library(yalta_modele STATIC
+    src/ia/IAMinMax.cpp
+    src/modele/GeometriePlateau.cpp
     src/modele/Piece.cpp
     src/modele/Plateau.cpp
     src/modele/PieceFactory.cpp
