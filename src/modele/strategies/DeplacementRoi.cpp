@@ -1,5 +1,6 @@
 #include "DeplacementRoi.h"
 
+#include "../GeometriePlateau.h"
 #include "../Piece.h"
 #include "../Plateau.h"
 
@@ -11,17 +12,16 @@ std::vector<Position> DeplacementRoi::coupsPossibles(
     Couleur        couleur) const
 {
     std::vector<Position> coups;
-    for (int dc = -1; dc <= 1; ++dc) {
-        for (int dr = -1; dr <= 1; ++dr) {
-            if (dc == 0 && dr == 0) continue;
-            Position p{origine.secteur,
-                       static_cast<char>(origine.colonne + dc),
-                       static_cast<std::int8_t>(origine.rang + dr)};
-            if (!p.estValide()) continue;
-            Piece* cible = plateau.pieceEn(p);
-            if (!cible || cible->getCouleur() != couleur) {
-                coups.push_back(p);
-            }
+    for (const Position& position : geometrie::voisinsArete(origine)) {
+        Piece* cible = plateau.pieceEn(position);
+        if (!cible || cible->getCouleur() != couleur) {
+            coups.push_back(position);
+        }
+    }
+    for (const Position& position : geometrie::voisinsCoin(origine)) {
+        Piece* cible = plateau.pieceEn(position);
+        if (!cible || cible->getCouleur() != couleur) {
+            coups.push_back(position);
         }
     }
     return coups;

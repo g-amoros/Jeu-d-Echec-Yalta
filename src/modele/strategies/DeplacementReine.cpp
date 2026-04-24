@@ -1,5 +1,6 @@
 #include "DeplacementReine.h"
 
+#include "../GeometriePlateau.h"
 #include "../Piece.h"
 #include "../Plateau.h"
 
@@ -11,26 +12,35 @@ std::vector<Position> DeplacementReine::coupsPossibles(
     Couleur        couleur) const
 {
     std::vector<Position> coups;
-    const int directions[8][2] = {
-        {+1, 0},  {-1, 0},  {0, +1},  {0, -1},
-        {+1, +1}, {+1, -1}, {-1, +1}, {-1, -1}
-    };
 
-    for (const auto& d : directions) {
-        for (int k = 1; k < 8; ++k) {
-            Position p{origine.secteur,
-                       static_cast<char>(origine.colonne + d[0] * k),
-                       static_cast<std::int8_t>(origine.rang + d[1] * k)};
-            if (!p.estValide()) break;
-            Piece* cible = plateau.pieceEn(p);
+    for (const auto& rayon : geometrie::rayonsArete(origine)) {
+        for (Position position : rayon) {
+            Piece* cible = plateau.pieceEn(position);
             if (!cible) {
-                coups.push_back(p);
-            } else {
-                if (cible->getCouleur() != couleur) coups.push_back(p);
-                break;
+                coups.push_back(position);
+                continue;
             }
+            if (cible->getCouleur() != couleur) {
+                coups.push_back(position);
+            }
+            break;
         }
     }
+
+    for (const auto& rayon : geometrie::rayonsCoin(origine)) {
+        for (Position position : rayon) {
+            Piece* cible = plateau.pieceEn(position);
+            if (!cible) {
+                coups.push_back(position);
+                continue;
+            }
+            if (cible->getCouleur() != couleur) {
+                coups.push_back(position);
+            }
+            break;
+        }
+    }
+
     return coups;
 }
 

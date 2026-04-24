@@ -1,5 +1,6 @@
 #include "DeplacementCavalier.h"
 
+#include "../GeometriePlateau.h"
 #include "../Piece.h"
 #include "../Plateau.h"
 
@@ -11,19 +12,11 @@ std::vector<Position> DeplacementCavalier::coupsPossibles(
     Couleur        couleur) const
 {
     std::vector<Position> coups;
-    const int sauts[8][2] = {
-        {+2, +1}, {+2, -1}, {-2, +1}, {-2, -1},
-        {+1, +2}, {+1, -2}, {-1, +2}, {-1, -2}
-    };
 
-    for (const auto& s : sauts) {
-        Position p{origine.secteur,
-                   static_cast<char>(origine.colonne + s[0]),
-                   static_cast<std::int8_t>(origine.rang + s[1])};
-        if (!p.estValide()) continue;
-        Piece* cible = plateau.pieceEn(p);
+    for (const Position& position : geometrie::sautsCavalier(origine)) {
+        Piece* cible = plateau.pieceEn(position);
         if (!cible || cible->getCouleur() != couleur) {
-            coups.push_back(p);
+            coups.push_back(position);
         }
     }
     return coups;

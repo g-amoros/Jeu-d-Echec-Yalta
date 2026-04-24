@@ -1,5 +1,6 @@
 #include "DeplacementFou.h"
 
+#include "../GeometriePlateau.h"
 #include "../Piece.h"
 #include "../Plateau.h"
 
@@ -11,23 +12,21 @@ std::vector<Position> DeplacementFou::coupsPossibles(
     Couleur        couleur) const
 {
     std::vector<Position> coups;
-    const int diagonales[4][2] = {{+1, +1}, {+1, -1}, {-1, +1}, {-1, -1}};
 
-    for (const auto& d : diagonales) {
-        for (int k = 1; k < 8; ++k) {
-            Position p{origine.secteur,
-                       static_cast<char>(origine.colonne + d[0] * k),
-                       static_cast<std::int8_t>(origine.rang + d[1] * k)};
-            if (!p.estValide()) break;
-            Piece* cible = plateau.pieceEn(p);
+    for (const auto& rayon : geometrie::rayonsCoin(origine)) {
+        for (Position position : rayon) {
+            Piece* cible = plateau.pieceEn(position);
             if (!cible) {
-                coups.push_back(p);
-            } else {
-                if (cible->getCouleur() != couleur) coups.push_back(p);
-                break;
+                coups.push_back(position);
+                continue;
             }
+            if (cible->getCouleur() != couleur) {
+                coups.push_back(position);
+            }
+            break;
         }
     }
+
     return coups;
 }
 
