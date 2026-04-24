@@ -2,7 +2,8 @@
 
 #include <QMainWindow>
 
-class QCheckBox;
+class QLabel;
+class QPushButton;
 class QSpinBox;
 
 namespace yalta {
@@ -11,9 +12,6 @@ class Partie;
 class VuePlateau;
 class ControleurJeu;
 
-/**
- * @brief Fenêtre principale Qt : contient la VuePlateau et une barre de statut.
- */
 class FenetrePrincipale : public QMainWindow {
     Q_OBJECT
 
@@ -21,14 +19,24 @@ public:
     explicit FenetrePrincipale(QWidget* parent = nullptr);
     ~FenetrePrincipale() override;
 
+private slots:
+    void onTourChange(const QString& message);
+    void onPartieTerminee(const QString& message);
+    void onNouvelleParte();
+
 private:
-    Partie*        partie_     {nullptr};
-    VuePlateau*    vuePlateau_ {nullptr};
-    ControleurJeu* controleur_ {nullptr};
-    QCheckBox*     cbBlancsIA_ {nullptr};
-    QCheckBox*     cbNoirsIA_ {nullptr};
-    QCheckBox*     cbRougesIA_ {nullptr};
-    QSpinBox*      sbProfondeur_ {nullptr};
+    QWidget* construirePanneau();
+
+    Partie*        partie_        {nullptr};
+    VuePlateau*    vuePlateau_    {nullptr};
+    ControleurJeu* controleur_    {nullptr};
+
+    QLabel*      lblTour_          {nullptr};
+    QPushButton* btnBlancsIA_      {nullptr};
+    QPushButton* btnNoirsIA_       {nullptr};
+    QPushButton* btnRougesIA_      {nullptr};
+    QSpinBox*    sbProfondeur_     {nullptr};
+    QPushButton* btnNouvelleParte_ {nullptr};
 };
 
 } // namespace yalta

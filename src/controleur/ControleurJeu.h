@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ia/IAMinMax.h"
 #include "modele/Couleur.h"
 #include "modele/Position.h"
 #include <QObject>
@@ -13,13 +12,6 @@ namespace yalta {
 class Partie;
 class VuePlateau;
 
-/**
- * @brief Contrôleur MVC : relie la Vue Qt au Modèle Partie.
- *
- * Il maintient la sélection courante (première case cliquée) et, au second
- * clic, tente de jouer le coup correspondant via Partie::jouerCoup. Les
- * coups illégaux sont ignorés et la sélection est réinitialisée.
- */
 class ControleurJeu : public QObject {
     Q_OBJECT
 
@@ -29,17 +21,21 @@ public:
     void setJoueurIA(Couleur couleur, bool estIA);
     void setProfondeurIA(int profondeur);
 
+    [[nodiscard]] QString messageTour() const;
+
 signals:
     void tourChange(const QString& message);
+    void partieTerminee(const QString& message);
 
 public slots:
     void onCaseCliquee(Position pos);
+    void reinitialiser();
 
 private slots:
     void jouerTourIA();
 
 private:
-    [[nodiscard]] QString messageTour() const;
+    void notifierChangementTour();
 
     Partie&                 partie_;
     VuePlateau&             vue_;

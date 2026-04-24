@@ -5,6 +5,7 @@
 
 #include <QBrush>
 #include <QFont>
+#include <QGraphicsEllipseItem>
 #include <QGraphicsPolygonItem>
 #include <QGraphicsScene>
 #include <QGraphicsTextItem>
@@ -18,6 +19,8 @@
 namespace yalta {
 
 namespace {
+
+// ── Géométrie du plateau (inchangée) ──────────────────────────────────────
 
 constexpr qreal UNITE_CASE        = 64.0;
 constexpr qreal LONGUEUR_PIECE    = 4.0 * UNITE_CASE;
@@ -154,6 +157,13 @@ QPointF centreCase(Position position) {
     return somme / poly.size();
 }
 
+QColor couleurCase(Position position) {
+    const CoordonneesLocales coords = coordonneesLocales(position);
+    return ((coords.pieceIndex + coords.colonne + coords.rang) % 2 == 0)
+        ? QColor(235, 210, 170)
+        : QColor(160, 110, 70);
+}
+
 QString glyphe(TypePiece t) {
     switch (t) {
         case TypePiece::ROI:      return QStringLiteral("♚");
@@ -166,82 +176,156 @@ QString glyphe(TypePiece t) {
     return QStringLiteral("?");
 }
 
-QColor couleurPiece(Couleur c) {
-    switch (c) {
-        case Couleur::BLANC: return QColor(245, 245, 245);
-        case Couleur::NOIR:  return QColor(25, 25, 25);
-        case Couleur::ROUGE: return QColor(200, 40, 40);
-    }
-    return Qt::gray;
-}
+// ── Visuels des pièces ────────────────────────────────────────────────────
 
-QColor couleurCase(Position position) {
-    const CoordonneesLocales coords = coordonneesLocales(position);
-    return ((coords.pieceIndex + coords.colonne + coords.rang) % 2 == 0)
-        ? QColor(235, 210, 170)
-        : QColor(160, 110, 70);
+struct StylePiece {
+    QColor cercle;   // fond du token
+    QColor bord;     // contour du token
+    QColor glyphe;   // couleur du symbole unicode
+};
+
+StylePiece stylePiece(Couleur c) {
+    switch (c) {
+        case Couleur::BLANC:
+            // Token ivoire clair, symbole presque noir
+            return {QColor(242, 228, 192, 230),
+                    QColor(195, 162, 100, 255),
+                    QColor(28, 22, 12)};
+        case Couleur::NOIR:
+            // Token brun foncé, symbole crème
+            return {QColor(46, 36, 24, 230),
+                    QColor(95, 78, 52, 255),
+                    QColor(236, 222, 192)};
+        case Couleur::ROUGE:
+            // Token rouge profond, symbole rose clair
+            return {QColor(168, 18, 18, 230),
+                    QColor(225, 60, 60, 255),
+                    QColor(255, 210, 200)};
+    }
+    return {Qt::gray, Qt::black, Qt::white};
 }
 
 } // namespace
+
+// ── Construction ─────────────────────────────────────────────────────────
 
 VuePlateau::VuePlateau(const Partie& partie, QWidget* parent)
     : QGraphicsView(parent), partie_(partie)
 {
     setScene(new QGraphicsScene(this));
     setRenderHint(QPainter::Antialiasing);
-    setBackgroundBrush(QColor(40, 40, 45));
+    setRenderHint(QPainter::SmoothPixmapTransform);
+    setBackgroundBrush(QColor(28, 28, 34));
+    setFrameShape(QFrame::NoFrame);
     rafraichir();
 }
+
+// ── Rendu complet ─────────────────────────────────────────────────────────
 
 void VuePlateau::rafraichir() {
     scene()->clear();
 
+    // 1. Plateau (géométrie strictement inchangée)
     for (int secteur = 0; secteur < 3; ++secteur) {
         for (int rang = 1; rang <= 4; ++rang) {
             for (char colonne = 'a'; colonne <= 'h'; ++colonne) {
-                const Position position{
+                const Position pos{
                     static_cast<std::int8_t>(secteur),
                     colonne,
                     static_cast<std::int8_t>(rang)
                 };
-
                 scene()->addPolygon(
-                    polygoneCase(position),
+                    polygoneCase(pos),
                     QPen(QColor(30, 30, 30), 1.1),
-                    QBrush(couleurCase(position))
+                    QBrush(couleurCase(pos))
                 );
             }
         }
     }
 
+    // 2. Dernier coup (halo bleu-ardoise)
+    if (dernierCoup_) {
+        const QPen  bordBleu(QColor(85, 145, 230, 200), 2.5);
+        const QBrush fondBleu(QColor(75, 130, 210, 95));
+        scene()->addPolygon(polygoneCase(dernierCoup_->origine),     bordBleu, fondBleu);
+        scene()->addPolygon(polygoneCase(dernierCoup_->destination),  bordBleu, fondBleu);
+    }
+
+    // 3. Pièce sélectionnée (halo doré)
+    if (selection_) {
+        scene()->addPolygon(
+            polygoneCase(*selection_),
+            QPen(QColor(242, 192, 28, 230), 3.2),
+            QBrush(QColor(242, 192, 28, 75))
+        );
+    }
+
+    // 4. Destinations légales — point vert (case vide) ou anneau (capture)
+    for (const Position& pos : surbrillance_) {
+        const bool occupe = partie_.plateau().pieceEn(pos) != nullptr;
+        if (occupe) {
+            scene()->addPolygon(
+                polygoneCase(pos),
+                QPen(QColor(55, 190, 90, 215), 3.5),
+                QBrush(QColor(55, 190, 90, 48))
+            );
+        } else {
+            constexpr qreal R = 9.5;
+            const QPointF c = centreCase(pos);
+            scene()->addEllipse(
+                c.x() - R, c.y() - R, R * 2.0, R * 2.0,
+                QPen(Qt::NoPen),
+                QBrush(QColor(55, 190, 90, 185))
+            );
+        }
+    }
+
+    // 5. Pièces — token circulaire + glyphe unicode
     QFont police;
-    police.setPointSize(48);
+    police.setPointSize(38);
+    police.setStyleStrategy(QFont::PreferAntialias);
 
     for (const auto& [pos, piece] : partie_.plateau().cases()) {
         if (!piece) continue;
 
-        const QPointF centre = centreCase(pos);
-        auto* texte = scene()->addText(glyphe(piece->getType()), police);
-        texte->setDefaultTextColor(couleurPiece(piece->getCouleur()));
+        const QPointF   c     = centreCase(pos);
+        const StylePiece style = stylePiece(piece->getCouleur());
 
+        // Token (cercle de fond)
+        constexpr qreal R = 26.0;
+        scene()->addEllipse(
+            c.x() - R, c.y() - R, R * 2.0, R * 2.0,
+            QPen(style.bord, 2.2),
+            QBrush(style.cercle)
+        );
+
+        // Glyphe centré
+        auto* texte = scene()->addText(glyphe(piece->getType()), police);
+        texte->setDefaultTextColor(style.glyphe);
         const QRectF br = texte->boundingRect();
-        texte->setPos(centre.x() - br.width() / 2.0,
-                      centre.y() - br.height() / 2.0);
+        texte->setPos(c.x() - br.width()  / 2.0,
+                      c.y() - br.height() / 2.0);
     }
 
-    setSceneRect(scene()->itemsBoundingRect().adjusted(-MARGE_SCENE, -MARGE_SCENE,
-                                                       MARGE_SCENE, MARGE_SCENE));
+    setSceneRect(scene()->itemsBoundingRect().adjusted(
+        -MARGE_SCENE, -MARGE_SCENE, MARGE_SCENE, MARGE_SCENE));
 }
+
+// ── Mutateurs d'état (stockent sans redessiner) ───────────────────────────
 
 void VuePlateau::surbrillance(const std::vector<Position>& cibles) {
-    for (const Position& position : cibles) {
-        scene()->addPolygon(
-            polygoneCase(position),
-            QPen(QColor(40, 140, 40), 3),
-            QBrush(QColor(80, 200, 80, 140))
-        );
-    }
+    surbrillance_ = cibles;
 }
+
+void VuePlateau::selectionner(std::optional<Position> pos) {
+    selection_ = pos;
+}
+
+void VuePlateau::setDernierCoup(std::optional<Coup> coup) {
+    dernierCoup_ = coup;
+}
+
+// ── Entrée souris ─────────────────────────────────────────────────────────
 
 void VuePlateau::mousePressEvent(QMouseEvent* event) {
     const QPointF pt = mapToScene(event->pos());
@@ -249,14 +333,13 @@ void VuePlateau::mousePressEvent(QMouseEvent* event) {
     for (int secteur = 0; secteur < 3; ++secteur) {
         for (int rang = 1; rang <= 4; ++rang) {
             for (char colonne = 'a'; colonne <= 'h'; ++colonne) {
-                const Position position{
+                const Position pos{
                     static_cast<std::int8_t>(secteur),
                     colonne,
                     static_cast<std::int8_t>(rang)
                 };
-
-                if (!polygoneCase(position).containsPoint(pt, Qt::OddEvenFill)) continue;
-                emit caseCliquee(position);
+                if (!polygoneCase(pos).containsPoint(pt, Qt::OddEvenFill)) continue;
+                emit caseCliquee(pos);
                 return;
             }
         }
