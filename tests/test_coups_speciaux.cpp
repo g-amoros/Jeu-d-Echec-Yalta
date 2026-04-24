@@ -1,8 +1,32 @@
 #include <gtest/gtest.h>
 
+#define private public
 #include "modele/Partie.h"
+#undef private
+#include "modele/PieceFactory.h"
 
 using namespace yalta;
+
+namespace {
+
+void viderPartie(Partie& partie) {
+    partie.plateau_ = Plateau{};
+    partie.pieces_.clear();
+    partie.historique_.clear();
+    partie.tourCourant_ = 0;
+    for (auto& joueur : partie.joueurs_) {
+        joueur.estElimine = false;
+    }
+}
+
+Piece* ajouterPiece(Partie& partie, TypePiece type, Couleur couleur, Position position) {
+    partie.pieces_.push_back(PieceFactory::creer(type, couleur, position));
+    Piece* piece = partie.pieces_.back().get();
+    partie.plateau_.poser(position, piece);
+    return piece;
+}
+
+} // namespace
 
 TEST(Partie, InitialisationAvecTroisJoueurs) {
     Partie p;
@@ -39,4 +63,34 @@ TEST(Partie, PartieNonTermineeAuDemarrage) {
     EXPECT_FALSE(p.estTerminee());
     EXPECT_FALSE(p.estEnEchec(Couleur::BLANC));
     EXPECT_FALSE(p.estMat(Couleur::BLANC));
+}
+
+TEST(Partie, CaptureRetireLaPieceDuModele) {
+    Partie p;
+    viderPartie(p);
+
+    Piece* tourBlanche = ajouterPiece(p, TypePiece::TOUR, Couleur::BLANC, Position{0, 'a', 1});
+    ajouterPiece(p, TypePiece::PION, Couleur::NOIR, Position{0, 'a', 3});
+
+    ASSERT_EQ(p.pieces_.size(), 2u);
+    ASSERT_TRUE(p.jouerCoup(Coup{Position{0, 'a', 1}, Position{0, 'a', 3}, TypeCoup::NORMAL, TypePiece::REINE}));
+
+    EXPECT_EQ(p.plateau_.pieceEn(Position{0, 'a', 3}), tourBlanche);
+    EXPECT_EQ(p.plateau_.pieceEn(Position{0, 'a', 1}), nullptr);
+    EXPECT_EQ(p.pieces_.size(), 1u);
+}
+
+TEST(Partie, PionAuRang4NeDevientPasAutomatiquementReine) {
+    Partie p;
+
+    ASSERT_TRUE(p.jouerCoup(Coup{
+        Position{0, 'a', 2},
+        Position{0, 'a', 4},
+        TypeCoup::NORMAL,
+        TypePiece::REINE
+    }));
+
+    Piece* piece = p.plateau().pieceEn(Position{0, 'a', 4});
+    ASSERT_NE(piece, nullptr);
+    EXPECT_EQ(piece->getType(), TypePiece::PION);
 }

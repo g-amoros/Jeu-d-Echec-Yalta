@@ -57,6 +57,17 @@ TEST(Tour, LigneEtColonneBloqueesParAlliée) {
     EXPECT_FALSE(contient(coups, Position{0, 'a', 4}));
 }
 
+TEST(Tour, PeutFranchirLeCentreVersLeSecteurVoisin) {
+    Plateau plateau;
+    std::vector<std::unique_ptr<Piece>> pool;
+    Piece* tour = poser(plateau, pool, TypePiece::TOUR, Couleur::BLANC, Position{0, 'd', 3});
+
+    auto coups = tour->coupsPossibles(plateau);
+    EXPECT_TRUE(contient(coups, Position{0, 'd', 4}));
+    EXPECT_TRUE(contient(coups, Position{2, 'e', 4}));
+    EXPECT_TRUE(contient(coups, Position{2, 'e', 3}));
+}
+
 TEST(Cavalier, HuitSautsValides) {
     Plateau plateau;
     std::vector<std::unique_ptr<Piece>> pool;
@@ -64,6 +75,28 @@ TEST(Cavalier, HuitSautsValides) {
                        Position{0, 'd', 3});
     auto coups = cav->coupsPossibles(plateau);
     EXPECT_GE(coups.size(), 2u); // au moins quelques-uns valides dans le secteur
+}
+
+TEST(Cavalier, PeutSauterParDessusLeCentre) {
+    Plateau plateau;
+    std::vector<std::unique_ptr<Piece>> pool;
+    Piece* cav = poser(plateau, pool, TypePiece::CAVALIER, Couleur::BLANC,
+                       Position{0, 'd', 4});
+
+    auto coups = cav->coupsPossibles(plateau);
+    EXPECT_TRUE(contient(coups, Position{1, 'c', 4}));
+    EXPECT_TRUE(contient(coups, Position{2, 'g', 4}));
+}
+
+TEST(Fou, DiagonaleTourneAuCentre) {
+    Plateau plateau;
+    std::vector<std::unique_ptr<Piece>> pool;
+    Piece* fou = poser(plateau, pool, TypePiece::FOU, Couleur::BLANC, Position{0, 'd', 3});
+
+    auto coups = fou->coupsPossibles(plateau);
+    EXPECT_TRUE(contient(coups, Position{0, 'e', 4}));
+    EXPECT_TRUE(contient(coups, Position{1, 'c', 4}));
+    EXPECT_TRUE(contient(coups, Position{1, 'b', 3}));
 }
 
 TEST(Roi, UneCaseToutesDirections) {
@@ -74,4 +107,14 @@ TEST(Roi, UneCaseToutesDirections) {
     EXPECT_TRUE(contient(coups, Position{0, 'd', 3}));
     EXPECT_TRUE(contient(coups, Position{0, 'e', 2}));
     EXPECT_TRUE(contient(coups, Position{0, 'c', 1}));
+}
+
+TEST(Roi, PeutChangerDeSecteurAuCentre) {
+    Plateau plateau;
+    std::vector<std::unique_ptr<Piece>> pool;
+    Piece* roi = poser(plateau, pool, TypePiece::ROI, Couleur::BLANC, Position{0, 'd', 4});
+
+    auto coups = roi->coupsPossibles(plateau);
+    EXPECT_TRUE(contient(coups, Position{2, 'e', 4}));
+    EXPECT_TRUE(contient(coups, Position{1, 'd', 4}));
 }
