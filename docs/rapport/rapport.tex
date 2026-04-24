@@ -2,15 +2,33 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[french]{babel}
+\usepackage[provide=*,french]{babel}
 \usepackage[margin=2cm]{geometry}
 \usepackage{graphicx}
 \usepackage{hyperref}
-\usepackage{enumitem}
+\newif\ifyaltahasenumitem
+\IfFileExists{enumitem.sty}{
+    \yaltahasenumitemtrue
+    \usepackage{enumitem}
+}{
+    \yaltahasenumitemfalse
+}
+\ifyaltahasenumitem
+    \setlist{nosep}
+\else
+    \makeatletter
+    \def\@listi{
+        \leftmargin\leftmargini
+        \topsep 0pt
+        \parsep 0pt
+        \itemsep 0pt
+    }
+    \let\@listI\@listi
+    \makeatother
+\fi
 \usepackage{xcolor}
 
 \hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue!50!black}
-\setlist{nosep}
 
 \title{\vspace{-1.5cm}Jeu d'\'Echec Yalta --- Rapport technique}
 \author{Gaël Amoros}
@@ -24,11 +42,9 @@
 
 Le Yalta est une variante d'échecs à trois joueurs jouée sur un plateau hexagonal de
 96~cases, chaque joueur disposant des 16~pièces classiques (soit 48~pièces au total).
-Le projet consiste à concevoir et implémenter ce jeu en C++ en appliquant une
-modélisation orientée objet rigoureuse et trois design patterns, dont le
-\emph{Modèle-Vue-Contrôleur} imposé par le sujet. Une intelligence artificielle
-fondée sur min-max / alpha-beta multi-threadée est attendue dans une itération
-ultérieure et sort donc du périmètre de ce rapport intermédiaire.
+Le projet consiste à concevoir et implémenter ce jeu en appliquant une
+modélisation orientée objet et trois design patterns, dont le
+\emph{Modèle-Vue-Contrôleur} imposé par le sujet.
 
 Les difficultés principales identifiées en phase d'analyse sont~: (i)~la
 représentation des 96~cases du plateau Yalta, qui n'est pas une grille cartésienne
@@ -100,7 +116,6 @@ Trois diagrammes UML accompagnent cette analyse (dossier
 
 \section{Fonctionnalités implémentées}
 
-À ce stade du projet, le socle suivant est opérationnel~:
 \begin{itemize}
     \item moteur complet avec les six types de pièces (pion, tour, cavalier, fou,
     reine, roi) et leurs règles de déplacement via Strategy~;
@@ -126,14 +141,5 @@ est volontairement simplifiée et ne gère pas encore les transitions entre
 secteurs pour les pièces de longue portée (fous, reines). Cette limite,
 identifiée dès la conception, sera levée en introduisant une fonction
 \emph{voisin(Position, direction)} consultée par les Strategy concernées.
-
-\section{Améliorations futures}
-
-L'itération suivante ajoutera l'intelligence artificielle demandée~: une
-Strategy de décision implémentant \emph{min-max} puis \emph{alpha-beta}, avec
-parallélisation des sous-arbres via \texttt{std::async}. Cette IA pourra
-incarner un, deux ou trois joueurs simultanément, conformément au cahier des
-charges. La fonction d'évaluation, inspirée de l'annexe du sujet, combinera
-matériel, mobilité et sécurité du roi.
 
 \end{document}

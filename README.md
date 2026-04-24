@@ -40,5 +40,3 @@ cmake --build build
 **Fait** : moteur de jeu complet (6 types de pièces via Strategy, plateau 96 cases,
 Partie 3 joueurs, échec/mat/pat/élimination, roque, promotion, prise en passant),
 vue Qt, contrôleur clic-à-clic, tests GoogleTest, 3 diagrammes, rapport LaTeX.
-
-**À venir** : IA **min-max / alpha-beta** multi-threadée (itération suivante).
