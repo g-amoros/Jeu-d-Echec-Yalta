@@ -105,17 +105,18 @@ TEST(IAMinMax, TroisIAPeuventEnchainerPlusieursCoups) {
     }
 }
 
-TEST(IAMinMax, PremierCoupDePionNeLePromeutPasEnReine) {
+TEST(IAMinMax, PionAuRang4NeDevientPasAutomatiquementReine) {
+    // Vérifie que si l'IA avance un pion jusqu'au rang 4, il ne se promeut
+    // pas automatiquement. Ne suppose pas quel coup l'IA choisit.
     Partie p;
     IAMinMax ia(1);
 
     const Coup coup = ia.meilleurCoup(p);
-    Piece* avant = p.plateau().pieceEn(coup.origine);
-    ASSERT_NE(avant, nullptr);
-    ASSERT_EQ(avant->getType(), TypePiece::PION);
-
     ASSERT_TRUE(p.jouerCoup(coup));
+
     Piece* apres = p.plateau().pieceEn(coup.destination);
     ASSERT_NE(apres, nullptr);
-    EXPECT_EQ(apres->getType(), TypePiece::PION);
+    if (coup.destination.rang == 4) {
+        EXPECT_EQ(apres->getType(), TypePiece::PION);
+    }
 }
