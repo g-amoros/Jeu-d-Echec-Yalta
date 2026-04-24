@@ -50,7 +50,8 @@ private:
     std::vector<std::unique_ptr<Piece>>  pieces_;
     std::vector<Joueur>                  joueurs_;
     std::vector<Coup>                    historique_;
-    int                                  tourCourant_ {0};
+    int                                  tourCourant_      {0};
+    int                                  coupsSansProgres_ {0};
 };
 
 } // namespace yalta

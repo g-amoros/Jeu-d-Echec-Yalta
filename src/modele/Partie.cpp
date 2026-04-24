@@ -23,6 +23,7 @@ Partie::Partie(const Partie& other)
     : joueurs_(other.joueurs_)
     , historique_(other.historique_)
     , tourCourant_(other.tourCourant_)
+    , coupsSansProgres_(other.coupsSansProgres_)
 {
     for (const auto& p : other.pieces_)
         pieces_.push_back(p->clone());
@@ -32,11 +33,12 @@ Partie::Partie(const Partie& other)
 
 Partie& Partie::operator=(const Partie& other) {
     Partie tmp(other);
-    std::swap(plateau_,     tmp.plateau_);
-    std::swap(pieces_,      tmp.pieces_);
-    std::swap(joueurs_,     tmp.joueurs_);
-    std::swap(historique_,  tmp.historique_);
-    std::swap(tourCourant_, tmp.tourCourant_);
+    std::swap(plateau_,           tmp.plateau_);
+    std::swap(pieces_,            tmp.pieces_);
+    std::swap(joueurs_,           tmp.joueurs_);
+    std::swap(historique_,        tmp.historique_);
+    std::swap(tourCourant_,       tmp.tourCourant_);
+    std::swap(coupsSansProgres_,  tmp.coupsSansProgres_);
     return *this;
 }
 
@@ -150,6 +152,15 @@ bool Partie::jouerCoup(const Coup& coup) {
         return false;
     }
 
+    // Règle des 50 coups : capture ou mouvement de pion réinitialise le compteur.
+    const bool estCapture = (cible != nullptr);
+    const bool estPion    = (piece->getType() == TypePiece::PION);
+    if (estCapture || estPion) {
+        coupsSansProgres_ = 0;
+    } else {
+        ++coupsSansProgres_;
+    }
+
     appliquerCoupSansValidation(coup);
     historique_.push_back(coup);
 
@@ -234,6 +245,7 @@ bool Partie::tenterRoque(TypeCoup sens) {
     plateau_.deplacer(posRoi,  destRoi);  roi->setPosition(destRoi);
     plateau_.deplacer(posTour, destTour); tour->setPosition(destTour);
 
+    ++coupsSansProgres_;
     historique_.push_back(Coup{posRoi, destRoi, sens, TypePiece::REINE});
     passerAuSuivant();
     return true;
@@ -251,6 +263,7 @@ void Partie::passerAuSuivant() {
 }
 
 bool Partie::estTerminee() const {
+    if (coupsSansProgres_ >= 150) return true;   // règle des 50 coups (3 joueurs × 50 tours)
     int actifs = 0;
     for (const Joueur& j : joueurs_) if (!j.estElimine) ++actifs;
     return actifs <= 1;

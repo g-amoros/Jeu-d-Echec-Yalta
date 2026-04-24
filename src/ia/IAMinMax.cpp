@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <future>
 #include <limits>
+#include <random>
 #include <utility>
 #include <vector>
 
@@ -110,18 +111,25 @@ Coup IAMinMax::meilleurCoup(const Partie& partie) const {
         }));
     }
 
-    Coup meilleur = coups.front();
     int meilleureValeur = std::numeric_limits<int>::min();
+    std::vector<Coup> exAequo;
 
     for (std::size_t index = 0; index < coups.size(); ++index) {
         const int valeur = evaluations[index].get();
         if (valeur > meilleureValeur) {
             meilleureValeur = valeur;
-            meilleur = coups[index];
+            exAequo.clear();
+            exAequo.push_back(coups[index]);
+        } else if (valeur == meilleureValeur) {
+            exAequo.push_back(coups[index]);
         }
     }
 
-    return meilleur;
+    // Tiebreak aléatoire : évite les cycles déterministes quand plusieurs coups
+    // ont le même score (cas fréquent sans évaluation positionnelle).
+    static thread_local std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<std::size_t> dist(0, exAequo.size() - 1);
+    return exAequo[dist(rng)];
 }
 
 } // namespace yalta
